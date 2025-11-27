@@ -45,12 +45,12 @@ COLUMN_MAP = {
     "ID'd on betting?": " Did the staff member who served you challenge you for ID at the counter while you placed your bet?",
     "blank2": None,
     "blank3": None,
-    "VISITORSEX": "auditor_gender",
+    "VISITORSEX": None,
     "Eye contact on On entry/Whilst browsing": "As you entered the shop was eye contact made by a member of staff?",
     "Eye contact on betting": "Did the staff member who served you make eye contact with you?",
     "T21 cashier badge": None,
     "T21 posters shop": "Did you see any 'Think 21' posters in the shop?",
-    "T21 posters Yes": "Did you see any 'Think 21' posters behind the counter?"
+    "T21 posters Yes": "Did you see any 'Think 21' posters behind the counter}"
 }
 
 # ============================================================
@@ -84,76 +84,72 @@ def map_value(row, mapping):
                 if cleaned:
                     vals.append(cleaned)
         return " | ".join(vals)
-    if isinstance(mapping, str):
-        if mapping in row and pd.notna(row[mapping]):
-            return str(row[mapping]).strip()
+    if mapping in row and pd.notna(row[mapping]):
+        return str(row[mapping]).strip()
     return ""
 
 # ============================================================
-# STREAMLIT FILE UPLOADER
+# STREAMLIT UPLOADER
 # ============================================================
 
 uploaded_file = st.file_uploader("Upload audits_basic_data_export.csv", type=["csv"])
 
-if uploaded_file is not None:
-
-    # ============================================================
-    # LOAD DATA
-    # ============================================================
+if uploaded_file:
 
     df = pd.read_csv(uploaded_file, dtype=str).fillna("")
 
-    # ============================================================
-    # BUILD OUTPUT DATAFRAME
-    # ============================================================
+    # Build initial mapped output
+    mapped = pd.DataFrame()
+    for report_col, source_col in COLUMN_MAP.items():
+        mapped[report_col] = df.apply(lambda row: map_value(row, source_col), axis=1)
 
-    final_df = pd.DataFrame()
-
-    for report_col, export_mapping in COLUMN_MAP.items():
-        final_df[report_col] = df.apply(lambda row: map_value(row, export_mapping), axis=1)
-
-    # ============================================================
-    # APPLY VALUE RENAMING
-    # ============================================================
-
+    # Apply lookup replacements
     col_challenge = "Were you challenged for ID on On entry/Whilst browsing, at the machine or after machine play?"
-    if col_challenge in final_df.columns:
-        final_df[col_challenge] = final_df[col_challenge].apply(
-            lambda x: CHALLENGE_LOOKUP.get(str(x).strip().lower(), "")
-            if pd.notna(x) else ""
+    if col_challenge in mapped.columns:
+        mapped[col_challenge] = mapped[col_challenge].apply(
+            lambda x: CHALLENGE_LOOKUP.get(str(x).strip().lower(), "") if pd.notna(x) else ""
         )
 
     col_betting = "ID'd on betting?"
-    if col_betting in final_df.columns:
-        final_df[col_betting] = final_df[col_betting].apply(
-            lambda x: ID_BETTING_LOOKUP.get(str(x).strip().lower(), "")
-            if pd.notna(x) else ""
+    if col_betting in mapped.columns:
+        mapped[col_betting] = mapped[col_betting].apply(
+            lambda x: ID_BETTING_LOOKUP.get(str(x).strip().lower(), "") if pd.notna(x) else ""
         )
 
     # ============================================================
-    # BLANK COLUMN HEADERS
+    # UNIQUE COLUMN NAMES FOR DISPLAY
     # ============================================================
 
-    final_df.columns = ["" if col.startswith("blank") else col for col in final_df.columns]
+    display_cols = []
+    export_blanks = {}
+    blank_counter = 1
 
-    # ============================================================
-    # SHOW PREVIEW
-    # ============================================================
+    for col in mapped.columns:
+        if col.startswith("blank"):
+            display_col = f"_blank_{blank_counter}"
+            export_blanks[display_col] = ""
+            display_cols.append(display_col)
+            blank_counter += 1
+        else:
+            display_cols.append(col)
 
+    mapped.columns = display_cols
+
+    # Display table safely
     st.subheader("Preview of Output")
-    st.write(final_df)
+    st.dataframe(mapped)
 
-    # ============================================================
-    # PREPARE DOWNLOAD
-    # ============================================================
+    # Convert back to true blank headers for export
+    export_df = mapped.rename(columns=export_blanks)
 
-    output_buffer = io.BytesIO()
-    final_df.to_csv(output_buffer, index=False, encoding="utf-8-sig")
-    output_buffer.seek(0)
+    # Prepare CSV download
+    buffer = io.BytesIO()
+    export_df.to_csv(buffer, index=False, encoding="utf-8-sig")
+    buffer.seek(0)
 
     st.download_button(
         label="Download Betfred Report Data CSV",
-        data=output_buffer,
+        data=buffer,
         file_name="Betfred Report Data.csv",
         mime="text/csv"
     )
