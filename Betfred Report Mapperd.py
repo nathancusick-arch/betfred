@@ -19,7 +19,7 @@ COLUMN_MAP = {
     "Order Number": "order_internal_id",
     "Client Name": "client_name",
     "Visit Code": "internal_id",
-    "Order Deadline": "deadline_date",
+    "Order Deadline": "site_internal_id",
     "Responsibility": "responsibility",
     "Premises Name": "site_name",
     "Address1": "site_address_1",
@@ -50,7 +50,7 @@ COLUMN_MAP = {
     "Eye contact on betting": "Did the staff member who served you make eye contact with you?",
     "T21 cashier badge": None,
     "T21 posters shop": "Did you see any 'Think 21' posters in the shop?",
-    "T21 posters Yes": "Did you see any 'Think 21' posters behind the counter}"
+    "T21 posters Yes": "Did you see any 'Think 21' posters behind the counter?"
 }
 
 # ============================================================
