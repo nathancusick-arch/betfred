@@ -42,7 +42,7 @@ COLUMN_MAP = {
     "Were you challenged for ID on On entry/Whilst browsing, at the machine or after machine play?": "Were you challenged for ID on entry, at the machine or after machine play?",
     "Machine play": None,
     "After machine": None,
-    "ID'd on betting?": " Did the staff member who served you challenge you for ID at the counter while you placed your bet?",
+    "ID'd on betting?": "Did the staff member who served you challenge you for ID at the counter while you placed your bet?",
     "blank2": None,
     "blank3": None,
     "VISITORSEX": None,
